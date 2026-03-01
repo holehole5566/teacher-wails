@@ -1,0 +1,89 @@
+<script lang="ts">
+  export let assignments: Array<{
+    student: { seat_number: number; name: string };
+    bucket: string;
+  }>;
+</script>
+
+<div class="card lunch-card">
+  <div class="card-header">
+    <span class="card-icon">🍱</span>
+    <h3 class="card-title">抬餐負責人</h3>
+  </div>
+  <div class="card-body">
+    {#if assignments && assignments.length > 0}
+      <div class="assignment-list">
+        {#each assignments as a}
+          <div class="assignment-row">
+            <div class="student-info">
+              <span class="seat">{a.student.seat_number}號</span>
+              <span class="name">{a.student.name}</span>
+            </div>
+            <span class="bucket-tag">{a.bucket}</span>
+          </div>
+        {/each}
+      </div>
+    {:else}
+      <p class="no-data">今日無抬餐</p>
+    {/if}
+  </div>
+</div>
+
+<style>
+  .lunch-card {
+    border-left: 4px solid var(--warning);
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .card-icon {
+    font-size: 20px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .assignment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .assignment-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #fffbeb;
+    border-radius: 8px;
+  }
+  .student-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .seat {
+    font-size: 13px;
+    color: var(--warning);
+    font-weight: 600;
+  }
+  .name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .bucket-tag {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .no-data {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+</style>

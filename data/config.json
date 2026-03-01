@@ -1,0 +1,89 @@
+{
+  "students": [
+    {
+      "seat_number": 1,
+      "name": "諺諺",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 2,
+      "name": "帥哥",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 3,
+      "name": "麻糬",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 4,
+      "name": "寶寶",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 5,
+      "name": "雞雞",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 6,
+      "name": "變態",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 7,
+      "name": "Roger",
+      "duty_enabled": true,
+      "lunch_enabled": false
+    },
+    {
+      "seat_number": 8,
+      "name": "萱萱",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 9,
+      "name": "熊熊",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 10,
+      "name": "小劉",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    },
+    {
+      "seat_number": 11,
+      "name": "Faker",
+      "duty_enabled": true,
+      "lunch_enabled": true
+    }
+  ],
+  "settings": {
+    "semester_start_date": "2025-11-04",
+    "duty_group_size": 2,
+    "lunch_group_size": 5,
+    "duty_start_number": 1,
+    "lunch_start_number": 6,
+    "meal_buckets": [
+      "飯",
+      "菜1",
+      "菜2",
+      "菜3",
+      "湯"
+    ],
+    "auto_start": false
+  },
+  "holidays": [
+    "2025-11-17",
+    "2025-12-25"
+  ]
+}

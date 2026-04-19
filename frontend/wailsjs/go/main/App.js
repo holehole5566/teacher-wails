@@ -46,6 +46,10 @@ export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }
 
+export function SyncHolidays() {
+  return window['go']['main']['App']['SyncHolidays']();
+}
+
 export function ToggleDuty(arg1) {
   return window['go']['main']['App']['ToggleDuty'](arg1);
 }

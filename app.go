@@ -2,10 +2,18 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"teacher-wails/internal/models"
 	"teacher-wails/internal/services"
+	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -156,9 +164,147 @@ func (a *App) ClearHolidays() error {
 	return a.dh.SaveHolidays([]string{})
 }
 
+// SyncHolidays fetches the current year's government holiday calendar from
+// data.gov.tw and merges non-weekend holidays into the local holiday list.
+func (a *App) SyncHolidays() (int, error) {
+	year := time.Now().Year()
+	rocYear := year - 1911
+
+	// 1. Query data.gov.tw API to find the CSV download URL for this ROC year.
+	csvURL, err := findHolidayCSVURL(rocYear)
+	if err != nil {
+		return 0, fmt.Errorf("找不到 %d 年辦公日曆表: %w", rocYear, err)
+	}
+
+	// 2. Download and parse the CSV.
+	dates, err := fetchNonWeekendHolidays(csvURL)
+	if err != nil {
+		return 0, fmt.Errorf("下載或解析 CSV 失敗: %w", err)
+	}
+
+	// 3. Merge into existing holidays.
+	holidays, _ := a.dh.GetHolidays()
+	existing := make(map[string]bool, len(holidays))
+	for _, h := range holidays {
+		existing[h] = true
+	}
+	added := 0
+	for _, d := range dates {
+		if !existing[d] {
+			holidays = append(holidays, d)
+			added++
+		}
+	}
+	sort.Strings(holidays)
+	if err := a.dh.SaveHolidays(holidays); err != nil {
+		return 0, err
+	}
+	return added, nil
+}
+
+// findHolidayCSVURL queries the data.gov.tw API for dataset 14718 and returns
+// the download URL for the CSV matching the given ROC year.
+func findHolidayCSVURL(rocYear int) (string, error) {
+	resp, err := http.Get("https://data.gov.tw/api/v2/rest/dataset/14718")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var result struct {
+		Result struct {
+			Distribution []struct {
+				ResourceDescription string `json:"resourceDescription"`
+				ResourceDownloadUrl string `json:"resourceDownloadUrl"`
+			} `json:"distribution"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+
+	yearStr := fmt.Sprintf("%d", rocYear)
+	// Find the best match: description contains the year, is not Google calendar, not 更新 version
+	var fallback string
+	for _, d := range result.Result.Distribution {
+		desc := d.ResourceDescription
+		if !strings.Contains(desc, yearStr) {
+			continue
+		}
+		if strings.Contains(desc, "Google") {
+			continue
+		}
+		// Prefer the updated version if available
+		if strings.Contains(desc, "更新") {
+			return d.ResourceDownloadUrl, nil
+		}
+		fallback = d.ResourceDownloadUrl
+	}
+	if fallback != "" {
+		return fallback, nil
+	}
+	return "", fmt.Errorf("no CSV found for ROC year %d", rocYear)
+}
+
+// fetchNonWeekendHolidays downloads a government holiday CSV and returns
+// dates (YYYY-MM-DD) that are holidays falling on weekdays (Mon-Fri).
+func fetchNonWeekendHolidays(url string) ([]string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Strip BOM if present
+	content := strings.TrimPrefix(string(body), "\xef\xbb\xbf")
+	reader := csv.NewReader(strings.NewReader(content))
+
+	var dates []string
+	header := true
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			break
+		}
+		if header {
+			header = false
+			continue
+		}
+		if len(record) < 4 {
+			continue
+		}
+		dateRaw := strings.TrimSpace(record[0]) // e.g. "20260101"
+		dayOfWeek := strings.TrimSpace(record[1])
+		isHoliday := strings.TrimSpace(record[2])
+
+		if isHoliday != "2" {
+			continue
+		}
+		// Skip weekends (六=Saturday, 日=Sunday)
+		if dayOfWeek == "六" || dayOfWeek == "日" {
+			continue
+		}
+		if len(dateRaw) != 8 {
+			continue
+		}
+		// Convert YYYYMMDD → YYYY-MM-DD
+		formatted := dateRaw[:4] + "-" + dateRaw[4:6] + "-" + dateRaw[6:8]
+		dates = append(dates, formatted)
+	}
+	return dates, nil
+}
+
 // ExportSchedule opens a save dialog and writes the CSV schedule to the chosen file.
 func (a *App) ExportSchedule() (string, error) {
-	csv, err := a.se.ExportCSV(90)
+	csvData, err := a.se.ExportCSV(90)
 	if err != nil {
 		return "", err
 	}
@@ -177,7 +323,7 @@ func (a *App) ExportSchedule() (string, error) {
 		return "", nil // user cancelled
 	}
 
-	if err := os.WriteFile(filePath, []byte(csv), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte(csvData), 0644); err != nil {
 		return "", err
 	}
 	return filePath, nil

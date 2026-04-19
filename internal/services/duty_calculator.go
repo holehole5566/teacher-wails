@@ -83,9 +83,7 @@ func (dc *DutyCalculator) GetTodayDuty() (models.TodayDutyResult, error) {
 	}
 
 	// ISO week-based rotation count
-	startYear, startWeek := startDate.ISOWeek()
-	currentYear, currentWeek := today.ISOWeek()
-	rotationCount := (currentYear-startYear)*52 + (currentWeek - startWeek)
+	rotationCount := isoWeeksBetween(startDate, today)
 
 	if len(lunchPool) > 0 {
 		lunchStudents := calculateGroupRotation(lunchPool, workdays, lunchGroupSize, "weekly", today, startDate, settings.LunchStartNumber)
@@ -135,9 +133,7 @@ func (dc *DutyCalculator) GetDutyForDate(date time.Time) ([]models.Student, []mo
 		dutyStudents = calculateGroupRotation(dutyPool, workdays, dutyGroupSize, "daily", date, startDate, settings.DutyStartNumber)
 	}
 
-	startYear, startWeek := startDate.ISOWeek()
-	currentYear, currentWeek := date.ISOWeek()
-	rotationCount := (currentYear-startYear)*52 + (currentWeek - startWeek)
+	rotationCount := isoWeeksBetween(startDate, date)
 
 	var lunchAssignments []models.LunchAssignment
 	if len(lunchPool) > 0 {
@@ -146,6 +142,15 @@ func (dc *DutyCalculator) GetDutyForDate(date time.Time) ([]models.Student, []mo
 	}
 
 	return dutyStudents, lunchAssignments, nil
+}
+
+// isoWeeksBetween returns the number of ISO week boundaries between two dates.
+func isoWeeksBetween(a, b time.Time) int {
+	mondayOf := func(t time.Time) time.Time {
+		offset := (int(t.Weekday()) - int(time.Monday) + 7) % 7
+		return t.AddDate(0, 0, -offset)
+	}
+	return int(mondayOf(b).Sub(mondayOf(a)).Hours() / (24 * 7))
 }
 
 func calculateGroupRotation(students []models.Student, workdays int, groupSize int, rotationType string, currentDate, startDate time.Time, startNumber int) []models.Student {
@@ -158,9 +163,7 @@ func calculateGroupRotation(students []models.Student, workdays int, groupSize i
 	case "daily":
 		rotationCount = workdays
 	case "weekly":
-		startYear, startWeek := startDate.ISOWeek()
-		currentYear, currentWeek := currentDate.ISOWeek()
-		rotationCount = (currentYear-startYear)*52 + (currentWeek - startWeek)
+		rotationCount = isoWeeksBetween(startDate, currentDate)
 	default:
 		rotationCount = 0
 	}

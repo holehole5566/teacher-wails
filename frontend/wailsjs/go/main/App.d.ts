@@ -24,6 +24,8 @@ export function GetTodayDuty():Promise<models.TodayDutyResult>;
 
 export function SaveSettings(arg1:models.Settings):Promise<void>;
 
+export function SyncHolidays():Promise<number>;
+
 export function ToggleDuty(arg1:number):Promise<void>;
 
 export function ToggleLunch(arg1:number):Promise<void>;

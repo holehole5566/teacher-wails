@@ -16,8 +16,8 @@ func main() {
 
 	err := wails.Run(&options.App{
 		Title:  "班級值日生助手",
-		Width:  900,
-		Height: 600,
+		Width:  630,
+		Height: 420,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

@@ -82,12 +82,9 @@ func (dc *DutyCalculator) GetTodayDuty() (models.TodayDutyResult, error) {
 		lunchGroupSize = 5
 	}
 
-	// ISO week-based rotation count
-	rotationCount := isoWeeksBetween(startDate, today)
-
 	if len(lunchPool) > 0 {
 		lunchStudents := calculateGroupRotation(lunchPool, workdays, lunchGroupSize, "weekly", today, startDate, settings.LunchStartNumber)
-		result.LunchAssignments = assignMealBuckets(lunchStudents, settings.MealBuckets, rotationCount)
+		result.LunchAssignments = assignMealBuckets(lunchStudents, settings.MealBuckets, workdays)
 	}
 
 	return result, nil
@@ -133,12 +130,10 @@ func (dc *DutyCalculator) GetDutyForDate(date time.Time) ([]models.Student, []mo
 		dutyStudents = calculateGroupRotation(dutyPool, workdays, dutyGroupSize, "daily", date, startDate, settings.DutyStartNumber)
 	}
 
-	rotationCount := isoWeeksBetween(startDate, date)
-
 	var lunchAssignments []models.LunchAssignment
 	if len(lunchPool) > 0 {
 		lunchStudents := calculateGroupRotation(lunchPool, workdays, lunchGroupSize, "weekly", date, startDate, settings.LunchStartNumber)
-		lunchAssignments = assignMealBuckets(lunchStudents, settings.MealBuckets, rotationCount)
+		lunchAssignments = assignMealBuckets(lunchStudents, settings.MealBuckets, workdays)
 	}
 
 	return dutyStudents, lunchAssignments, nil
@@ -189,7 +184,7 @@ func calculateGroupRotation(students []models.Student, workdays int, groupSize i
 	return group
 }
 
-func assignMealBuckets(students []models.Student, mealBuckets []string, rotationCount int) []models.LunchAssignment {
+func assignMealBuckets(students []models.Student, mealBuckets []string, daySeed int) []models.LunchAssignment {
 	if len(students) == 0 {
 		return []models.LunchAssignment{}
 	}
@@ -207,7 +202,7 @@ func assignMealBuckets(students []models.Student, mealBuckets []string, rotation
 	}
 
 	// Seeded Fisher-Yates shuffle
-	rng := rand.New(rand.NewSource(int64(rotationCount)))
+	rng := rand.New(rand.NewSource(int64(daySeed)))
 	for i := len(available) - 1; i > 0; i-- {
 		j := rng.Intn(i + 1)
 		available[i], available[j] = available[j], available[i]

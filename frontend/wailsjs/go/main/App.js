@@ -38,12 +38,24 @@ export function GetStudents() {
   return window['go']['main']['App']['GetStudents']();
 }
 
+export function GetTimetable() {
+  return window['go']['main']['App']['GetTimetable']();
+}
+
 export function GetTodayDuty() {
   return window['go']['main']['App']['GetTodayDuty']();
 }
 
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
+}
+
+export function SaveTimetable(arg1) {
+  return window['go']['main']['App']['SaveTimetable'](arg1);
+}
+
+export function SetFullscreen(arg1) {
+  return window['go']['main']['App']['SetFullscreen'](arg1);
 }
 
 export function SyncHolidays() {

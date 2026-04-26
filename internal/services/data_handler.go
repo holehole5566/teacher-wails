@@ -61,6 +61,7 @@ func (dh *DataHandler) initConfig() error {
 				LunchStartNumber:  1,
 				AutoStart:         false,
 				MealBuckets:       []string{"飯桶", "菜桶1", "菜桶2", "湯桶", "餐具"},
+				CountdownTimes:    []string{},
 			},
 			Holidays: []string{},
 		}
@@ -140,6 +141,12 @@ func (dh *DataHandler) loadConfigUnsafe() (models.Config, error) {
 	if config.Settings.MealBuckets == nil {
 		config.Settings.MealBuckets = []string{}
 	}
+	if config.Settings.CountdownTimes == nil {
+		config.Settings.CountdownTimes = []string{}
+	}
+	if config.Settings.PeriodTimes == nil {
+		config.Settings.PeriodTimes = []string{}
+	}
 	return config, err
 }
 
@@ -218,5 +225,17 @@ func (dh *DataHandler) SaveHolidays(holidays []string) error {
 		return err
 	}
 	config.Holidays = holidays
+	return dh.saveConfigUnsafe(config)
+}
+
+// SaveTimetable saves the timetable to config.
+func (dh *DataHandler) SaveTimetable(timetable [5][7]string) error {
+	dh.mu.Lock()
+	defer dh.mu.Unlock()
+	config, err := dh.loadConfigUnsafe()
+	if err != nil {
+		return err
+	}
+	config.Timetable = timetable
 	return dh.saveConfigUnsafe(config)
 }

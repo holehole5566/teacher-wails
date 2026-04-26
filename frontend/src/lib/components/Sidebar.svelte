@@ -4,6 +4,7 @@
 
   const navItems = [
     { id: 'home', label: '今日值日', icon: '📋' },
+    { id: 'timetable', label: '課表設定', icon: '📚' },
     { id: 'students', label: '學生管理', icon: '👥' },
     { id: 'settings', label: '設定', icon: '⚙️' },
     { id: 'holidays', label: '假期管理', icon: '📅' },
@@ -28,6 +29,10 @@
     {/each}
   </nav>
   <div class="sidebar-footer">
+    <button class="nav-item display-btn" on:click={() => onNavigate('display')}>
+      <span class="nav-icon">🖥️</span>
+      <span class="nav-label">展示模式</span>
+    </button>
     <button class="nav-item export-btn" on:click={() => onNavigate('export')}>
       <span class="nav-icon">📊</span>
       <span class="nav-label">匯出排程</span>
@@ -102,5 +107,13 @@
   }
   .export-btn:hover {
     opacity: 1;
+  }
+  .display-btn {
+    opacity: 0.8;
+  }
+  .display-btn:hover {
+    opacity: 1;
+    background: var(--bg-sidebar-active);
+    color: var(--text-sidebar-active);
   }
 </style>

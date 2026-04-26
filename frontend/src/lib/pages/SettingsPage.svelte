@@ -8,6 +8,9 @@
   let lunchGroupSize = 5;
   let lunchStartNumber = 1;
   let mealBucketsStr = '';
+  let countdownTimes: string[] = [];
+  let periodTimes: string[] = ['','','','','','',''];
+  let newTime = '';
   let saved = false;
 
   async function loadSettings() {
@@ -18,6 +21,22 @@
     lunchGroupSize = s.lunch_group_size || 5;
     lunchStartNumber = s.lunch_start_number || 1;
     mealBucketsStr = (s.meal_buckets || []).join('，');
+    countdownTimes = (s.countdown_times || []).slice().sort();
+    const pt = s.period_times || [];
+    for (let i = 0; i < 7; i++) periodTimes[i] = pt[i] || '';
+    periodTimes = periodTimes;
+  }
+
+  function addTime() {
+    const t = newTime.trim();
+    if (t && /^\d{2}:\d{2}$/.test(t) && !countdownTimes.includes(t)) {
+      countdownTimes = [...countdownTimes, t].sort();
+      newTime = '';
+    }
+  }
+
+  function removeTime(t: string) {
+    countdownTimes = countdownTimes.filter(x => x !== t);
   }
 
   async function handleSave() {
@@ -25,6 +44,12 @@
       .split(/[,，]/)
       .map((b: string) => b.trim())
       .filter((b: string) => b);
+
+    if (buckets.length > 0 && buckets.length !== lunchGroupSize) {
+      if (!confirm(`餐桶數量（${buckets.length}）與抬餐每組人數（${lunchGroupSize}）不一致，確定要儲存嗎？`)) {
+        return;
+      }
+    }
 
     await SaveSettings({
       semester_start_date: semesterStart,
@@ -34,6 +59,8 @@
       lunch_start_number: lunchStartNumber,
       meal_buckets: buckets,
       auto_start: false,
+      countdown_times: countdownTimes,
+      period_times: periodTimes,
     });
     saved = true;
     setTimeout(() => { saved = false; }, 2000);
@@ -78,8 +105,38 @@
       <input type="text" bind:value={mealBucketsStr} placeholder="飯，菜1，菜2，湯，餐具" />
     </div>
 
+    <div class="form-group">
+      <label>每節上課時間（用於展示模式判斷當前節次）</label>
+      <div class="period-grid">
+        {#each periodTimes as _, i}
+          <div class="period-input">
+            <span class="period-label">第{i + 1}節</span>
+            <input type="time" bind:value={periodTimes[i]} />
+          </div>
+        {/each}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>上課倒數時間點（到達該時間前 1 分鐘開始倒數）</label>
+      <div class="inline-form">
+        <input type="time" bind:value={newTime} />
+        <button class="btn-primary btn-sm" on:click={addTime}>新增</button>
+      </div>
+      {#if countdownTimes.length > 0}
+        <div class="time-tags">
+          {#each countdownTimes as t}
+            <span class="time-tag">
+              {t}
+              <button class="tag-remove" on:click={() => removeTime(t)}>×</button>
+            </span>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
     <div class="form-actions">
-      <button class="btn-primary" on:click={handleSave}>儲存設定</button>
+      <button class="btn-primary save-btn" on:click={handleSave}>儲存設定</button>
       {#if saved}
         <span class="save-ok">已儲存</span>
       {/if}
@@ -89,7 +146,7 @@
 
 <style>
   .settings-form {
-    max-width: 480px;
+    max-width: 560px;
   }
   .form-row {
     display: flex;
@@ -102,11 +159,73 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 16px;
+  }
+  .save-btn {
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
   }
   .save-ok {
     color: var(--success);
     font-size: 13px;
     font-weight: 500;
+  }
+  .period-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .period-input {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+  .period-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .period-input input {
+    width: 110px;
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+  }
+  .time-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .time-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .tag-remove {
+    background: none;
+    border: none;
+    padding: 0 2px;
+    font-size: 16px;
+    color: var(--danger);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .tag-remove:hover {
+    color: var(--danger-hover);
   }
 </style>

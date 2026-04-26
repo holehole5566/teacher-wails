@@ -20,9 +20,15 @@ export function GetSettings():Promise<models.Settings>;
 
 export function GetStudents():Promise<Array<models.Student>>;
 
+export function GetTimetable():Promise<any>;
+
 export function GetTodayDuty():Promise<models.TodayDutyResult>;
 
 export function SaveSettings(arg1:models.Settings):Promise<void>;
+
+export function SaveTimetable(arg1:any):Promise<void>;
+
+export function SetFullscreen(arg1:boolean):Promise<void>;
 
 export function SyncHolidays():Promise<number>;
 

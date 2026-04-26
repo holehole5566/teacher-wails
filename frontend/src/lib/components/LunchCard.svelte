@@ -3,24 +3,28 @@
     student: { seat_number: number; name: string };
     bucket: string;
   }>;
+  export let onReplace: (index: number) => void = () => {};
+  export let modified = false;
 </script>
 
 <div class="card lunch-card">
   <div class="card-header">
     <span class="card-icon">🍱</span>
     <h3 class="card-title">抬餐負責人</h3>
+    {#if modified}<span class="badge badge-muted">已手動調整</span>{/if}
   </div>
   <div class="card-body">
     {#if assignments && assignments.length > 0}
       <div class="assignment-list">
-        {#each assignments as a}
-          <div class="assignment-row">
+        {#each assignments as a, i}
+          <button class="assignment-row" title="點擊替換" on:click={() => onReplace(i)}>
             <div class="student-info">
               <span class="seat">{a.student.seat_number}號</span>
               <span class="name">{a.student.name}</span>
+              <span class="edit-hint">✎</span>
             </div>
             <span class="bucket-tag">{a.bucket}</span>
-          </div>
+          </button>
         {/each}
       </div>
     {:else}
@@ -58,6 +62,15 @@
     padding: 10px 14px;
     background: #fffbeb;
     border-radius: 8px;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .assignment-row:hover {
+    background: #fef3c7;
+    box-shadow: var(--shadow);
   }
   .student-info {
     display: flex;
@@ -73,6 +86,15 @@
     font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
+  }
+  .edit-hint {
+    font-size: 14px;
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .assignment-row:hover .edit-hint {
+    opacity: 1;
   }
   .bucket-tag {
     background: #fef3c7;

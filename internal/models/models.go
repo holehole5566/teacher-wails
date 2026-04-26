@@ -17,13 +17,16 @@ type Settings struct {
 	LunchStartNumber  int      `json:"lunch_start_number"`
 	AutoStart         bool     `json:"auto_start"`
 	MealBuckets       []string `json:"meal_buckets"`
+	CountdownTimes    []string `json:"countdown_times"`
+	PeriodTimes       []string `json:"period_times"`
 }
 
 // Config is the top-level JSON structure persisted to config.json.
 type Config struct {
-	Students []Student `json:"students"`
-	Settings Settings  `json:"settings"`
-	Holidays []string  `json:"holidays"`
+	Students  []Student    `json:"students"`
+	Settings  Settings     `json:"settings"`
+	Holidays  []string     `json:"holidays"`
+	Timetable [5][7]string `json:"timetable"`
 }
 
 // LunchAssignment pairs a student with a meal bucket.

@@ -328,3 +328,27 @@ func (a *App) ExportSchedule() (string, error) {
 	}
 	return filePath, nil
 }
+
+
+// SetFullscreen toggles the window fullscreen state.
+func (a *App) SetFullscreen(enabled bool) {
+	if enabled {
+		runtime.WindowFullscreen(a.ctx)
+	} else {
+		runtime.WindowUnfullscreen(a.ctx)
+	}
+}
+
+// GetTimetable returns the 5×7 timetable.
+func (a *App) GetTimetable() [5][7]string {
+	config, err := a.dh.LoadConfig()
+	if err != nil {
+		return [5][7]string{}
+	}
+	return config.Timetable
+}
+
+// SaveTimetable saves the 5×7 timetable.
+func (a *App) SaveTimetable(timetable [5][7]string) error {
+	return a.dh.SaveTimetable(timetable)
+}

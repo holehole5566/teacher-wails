@@ -58,6 +58,8 @@ export namespace models {
 	    lunch_start_number: number;
 	    auto_start: boolean;
 	    meal_buckets: string[];
+	    countdown_times: string[];
+	    period_times: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -72,6 +74,8 @@ export namespace models {
 	        this.lunch_start_number = source["lunch_start_number"];
 	        this.auto_start = source["auto_start"];
 	        this.meal_buckets = source["meal_buckets"];
+	        this.countdown_times = source["countdown_times"];
+	        this.period_times = source["period_times"];
 	    }
 	}
 	

@@ -1,20 +1,24 @@
 <script lang="ts">
   export let students: Array<{ seat_number: number; name: string }>;
+  export let onReplace: (index: number) => void = () => {};
+  export let modified = false;
 </script>
 
 <div class="card duty-card">
   <div class="card-header">
     <span class="card-icon">🧹</span>
     <h3 class="card-title">今日值日生</h3>
+    {#if modified}<span class="badge badge-muted">已手動調整</span>{/if}
   </div>
   <div class="card-body">
     {#if students && students.length > 0}
       <div class="student-list">
-        {#each students as student}
-          <div class="student-chip">
+        {#each students as student, i}
+          <button class="student-chip" title="點擊替換" on:click={() => onReplace(i)}>
             <span class="seat">{student.seat_number}號</span>
             <span class="name">{student.name}</span>
-          </div>
+            <span class="edit-hint">✎</span>
+          </button>
         {/each}
       </div>
     {:else}
@@ -52,6 +56,14 @@
     background: #eff6ff;
     border-radius: 10px;
     padding: 12px 18px;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    border: none;
+    font-family: inherit;
+  }
+  .student-chip:hover {
+    background: #dbeafe;
+    box-shadow: var(--shadow);
   }
   .seat {
     font-size: 13px;
@@ -62,6 +74,15 @@
     font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
+  }
+  .edit-hint {
+    font-size: 14px;
+    color: var(--text-secondary);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .student-chip:hover .edit-hint {
+    opacity: 1;
   }
   .no-data {
     color: var(--text-secondary);

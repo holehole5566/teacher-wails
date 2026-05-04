@@ -35,7 +35,7 @@
     countdownTimeMusicMap = (s.countdown_time_music_map || []).map((m: any) => ({ time: m.time, mode: m.mode || 'random', index: m.index || 0 }));
     countdownVolume = s.countdown_volume > 0 ? s.countdown_volume : 0.5;
     testAudios = countdownMusics.map(() => null);
-    syncTimeMusicMap();
+    rebuildTimeMusicSettings();
     const pt = s.period_times || [];
     for (let i = 0; i < 8; i++) periodTimes[i] = pt[i] || '';
     periodTimes = periodTimes;
@@ -46,6 +46,7 @@
     if (t && /^\d{2}:\d{2}$/.test(t) && !countdownTimes.includes(t)) {
       countdownTimes = [...countdownTimes, t].sort();
       newTime = '';
+      rebuildTimeMusicSettings();
     }
   }
 
@@ -95,32 +96,39 @@
     }
   }
 
-  function getTimeMusicEntry(t: string): CountdownTimeMusic {
-    return countdownTimeMusicMap.find(m => m.time === t) || { time: t, mode: 'random', index: 0 };
+  // Reactive map: time string → { mode, index } for instant template reactivity
+  let timeMusicSettings: Record<string, { mode: string; index: number }> = {};
+
+  function rebuildTimeMusicSettings() {
+    const map: Record<string, { mode: string; index: number }> = {};
+    for (const t of countdownTimes) {
+      const entry = countdownTimeMusicMap.find(m => m.time === t);
+      map[t] = entry ? { mode: entry.mode, index: entry.index } : { mode: 'random', index: 0 };
+    }
+    timeMusicSettings = map;
   }
 
   function setTimeMusicMode(t: string, mode: string) {
-    const existing = countdownTimeMusicMap.find(m => m.time === t);
-    if (existing) {
-      existing.mode = mode;
-      countdownTimeMusicMap = [...countdownTimeMusicMap];
-    } else {
-      countdownTimeMusicMap = [...countdownTimeMusicMap, { time: t, mode, index: 0 }];
-    }
+    timeMusicSettings[t] = { ...timeMusicSettings[t], mode };
+    timeMusicSettings = { ...timeMusicSettings };
+    syncMapFromSettings();
   }
 
   function setTimeMusicIndex(t: string, index: number) {
-    const existing = countdownTimeMusicMap.find(m => m.time === t);
-    if (existing) {
-      existing.index = index;
-      countdownTimeMusicMap = [...countdownTimeMusicMap];
-    } else {
-      countdownTimeMusicMap = [...countdownTimeMusicMap, { time: t, mode: 'index', index }];
-    }
+    timeMusicSettings[t] = { ...timeMusicSettings[t], index };
+    timeMusicSettings = { ...timeMusicSettings };
+    syncMapFromSettings();
+  }
+
+  function syncMapFromSettings() {
+    countdownTimeMusicMap = Object.entries(timeMusicSettings).map(([time, v]) => ({
+      time, mode: v.mode, index: v.index
+    }));
   }
 
   function syncTimeMusicMap() {
     countdownTimeMusicMap = countdownTimeMusicMap.filter(m => countdownTimes.includes(m.time));
+    rebuildTimeMusicSettings();
   }
 
   function onTimeMusicModeChange(t: string, e: Event) {
@@ -233,26 +241,26 @@
         <button class="btn-primary btn-sm" on:click={addTime}>新增</button>
       </div>
       {#if countdownTimes.length > 0}
-        <div class="time-tags">
+        <div class="time-list">
           {#each countdownTimes as t}
-            <div class="time-tag-row">
+            <div class="time-row">
               <span class="time-tag">
                 {t}
                 <button class="tag-remove" on:click={() => removeTime(t)}>×</button>
               </span>
-              {#if countdownMusics.length > 0}
+              {#if countdownMusics.length > 0 && timeMusicSettings[t]}
                 <select
                   class="mode-select"
-                  value={getTimeMusicEntry(t).mode}
+                  value={timeMusicSettings[t].mode}
                   on:change={e => onTimeMusicModeChange(t, e)}
                 >
                   <option value="random">隨機</option>
                   <option value="index">指定</option>
                 </select>
-                {#if getTimeMusicEntry(t).mode === 'index'}
+                {#if timeMusicSettings[t].mode === 'index'}
                   <select
                     class="track-select"
-                    value={getTimeMusicEntry(t).index}
+                    value={timeMusicSettings[t].index}
                     on:change={e => onTimeMusicIndexChange(t, e)}
                   >
                     {#each countdownMusics as track, i}
@@ -363,10 +371,10 @@
     border: none;
     background: transparent;
   }
-  .time-tags {
+  .time-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
     margin-top: 8px;
   }
   .time-tag {
@@ -428,11 +436,15 @@
     color: var(--text-secondary);
     margin: 4px 0;
   }
-  .time-tag-row {
+  .time-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
   }
   .mode-select, .track-select {
     font-size: 12px;

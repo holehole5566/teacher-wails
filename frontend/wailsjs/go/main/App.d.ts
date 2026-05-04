@@ -14,7 +14,9 @@ export function DeleteStudent(arg1:number):Promise<void>;
 
 export function ExportSchedule():Promise<string>;
 
-export function GetCountdownMusicData():Promise<string>;
+export function GetActiveCountdownMusicData(arg1:string):Promise<string>;
+
+export function GetCountdownMusicData(arg1:number):Promise<string>;
 
 export function GetHolidays():Promise<Array<string>>;
 
@@ -30,7 +32,9 @@ export function SaveSettings(arg1:models.Settings):Promise<void>;
 
 export function SaveTimetable(arg1:any):Promise<void>;
 
-export function SelectCountdownMusic():Promise<string>;
+export function SelectCountdownMusics():Promise<Array<string>>;
+
+export function ValidateRandomPool():Promise<boolean>;
 
 export function SetFullscreen(arg1:boolean):Promise<void>;
 

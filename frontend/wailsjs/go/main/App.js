@@ -26,8 +26,12 @@ export function ExportSchedule() {
   return window['go']['main']['App']['ExportSchedule']();
 }
 
-export function GetCountdownMusicData() {
-  return window['go']['main']['App']['GetCountdownMusicData']();
+export function GetActiveCountdownMusicData(arg1) {
+  return window['go']['main']['App']['GetActiveCountdownMusicData'](arg1);
+}
+
+export function GetCountdownMusicData(arg1) {
+  return window['go']['main']['App']['GetCountdownMusicData'](arg1);
 }
 
 export function GetHolidays() {
@@ -58,8 +62,12 @@ export function SaveTimetable(arg1) {
   return window['go']['main']['App']['SaveTimetable'](arg1);
 }
 
-export function SelectCountdownMusic() {
-  return window['go']['main']['App']['SelectCountdownMusic']();
+export function SelectCountdownMusics() {
+  return window['go']['main']['App']['SelectCountdownMusics']();
+}
+
+export function ValidateRandomPool() {
+  return window['go']['main']['App']['ValidateRandomPool']();
 }
 
 export function SetFullscreen(arg1) {

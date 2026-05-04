@@ -60,13 +60,14 @@ export namespace models {
 	    meal_buckets: string[];
 	    countdown_times: string[];
 	    period_times: string[];
-	    countdown_music: string;
 	    countdown_volume: number;
-	
+	    countdown_musics: Array<{path: string, in_random: boolean}>;
+	    countdown_time_music_map: Array<{time: string, mode: string, index: number}>;
+
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
 	    }
-	
+
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.semester_start_date = source["semester_start_date"];
@@ -78,8 +79,9 @@ export namespace models {
 	        this.meal_buckets = source["meal_buckets"];
 	        this.countdown_times = source["countdown_times"];
 	        this.period_times = source["period_times"];
-	        this.countdown_music = source["countdown_music"];
 	        this.countdown_volume = source["countdown_volume"];
+	        this.countdown_musics = source["countdown_musics"] || [];
+	        this.countdown_time_music_map = source["countdown_time_music_map"] || [];
 	    }
 	}
 	

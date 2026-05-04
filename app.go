@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"math/rand"
 	"teacher-wails/internal/models"
 	"teacher-wails/internal/services"
 	"time"
@@ -354,10 +355,9 @@ func (a *App) SaveTimetable(timetable [5][8]string) error {
 	return a.dh.SaveTimetable(timetable)
 }
 
-// SelectCountdownMusic opens a file dialog for the user to pick an MP3 file
-// and returns the selected file path.
-func (a *App) SelectCountdownMusic() (string, error) {
-	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+// SelectCountdownMusics opens a multi-file dialog for the user to pick MP3 files.
+func (a *App) SelectCountdownMusics() ([]string, error) {
+	return runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "選擇倒數音樂",
 		Filters: []runtime.FileFilter{
 			{DisplayName: "MP3 音訊 (*.mp3)", Pattern: "*.mp3"},
@@ -365,13 +365,79 @@ func (a *App) SelectCountdownMusic() (string, error) {
 	})
 }
 
-// GetCountdownMusicData reads the configured MP3 file and returns a base64 data URL.
-func (a *App) GetCountdownMusicData() (string, error) {
+// GetCountdownMusicData reads CountdownMusics[index] and returns a base64 data URL.
+// Used by the settings page for per-track preview.
+func (a *App) GetCountdownMusicData(index int) (string, error) {
 	settings, err := a.dh.GetSettings()
-	if err != nil || settings.CountdownMusic == "" {
+	if err != nil {
 		return "", err
 	}
-	data, err := os.ReadFile(settings.CountdownMusic)
+	if index < 0 || index >= len(settings.CountdownMusics) {
+		return "", fmt.Errorf("音樂索引超出範圍")
+	}
+	return a.readMusicFile(settings.CountdownMusics[index].Path)
+}
+
+// GetActiveCountdownMusicData selects and returns a base64 data URL for the track
+// to play at the given countdown time. Random mode picks from InRandom tracks;
+// index mode picks the specified track.
+func (a *App) GetActiveCountdownMusicData(triggerTime string) (string, error) {
+	settings, err := a.dh.GetSettings()
+	if err != nil {
+		return "", err
+	}
+	if len(settings.CountdownMusics) == 0 {
+		return "", nil
+	}
+
+	mode := "random"
+	selectedIndex := -1
+	for _, ctm := range settings.CountdownTimeMusicMap {
+		if ctm.Time == triggerTime {
+			mode = ctm.Mode
+			selectedIndex = ctm.Index
+			break
+		}
+	}
+
+	if mode == "index" {
+		if selectedIndex < 0 || selectedIndex >= len(settings.CountdownMusics) {
+			return "", fmt.Errorf("指定的音樂索引無效")
+		}
+		return a.readMusicFile(settings.CountdownMusics[selectedIndex].Path)
+	}
+
+	var pool []string
+	for _, t := range settings.CountdownMusics {
+		if t.InRandom {
+			pool = append(pool, t.Path)
+		}
+	}
+	if len(pool) == 0 {
+		return "", fmt.Errorf("隨機清單為空")
+	}
+	return a.readMusicFile(pool[rand.Intn(len(pool))])
+}
+
+// ValidateRandomPool returns true if at least one track has InRandom==true and its file exists.
+func (a *App) ValidateRandomPool() bool {
+	settings, err := a.dh.GetSettings()
+	if err != nil {
+		return false
+	}
+	for _, t := range settings.CountdownMusics {
+		if t.InRandom {
+			if _, err := os.Stat(t.Path); err == nil {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// readMusicFile reads a file path, validates it as MP3, and returns a base64 data URL.
+func (a *App) readMusicFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

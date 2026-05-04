@@ -8,19 +8,33 @@ type Student struct {
 	LunchEnabled bool   `json:"lunch_enabled"`
 }
 
+// MusicTrack is a single entry in the global countdown music playlist.
+type MusicTrack struct {
+	Path     string `json:"path"`
+	InRandom bool   `json:"in_random"`
+}
+
+// CountdownTimeMusic maps a countdown_time to a playback mode and optional track index.
+type CountdownTimeMusic struct {
+	Time  string `json:"time"`
+	Mode  string `json:"mode"`  // "random" | "index"
+	Index int    `json:"index"` // 0-based index into Settings.CountdownMusics
+}
+
 // Settings holds all configurable parameters.
 type Settings struct {
-	SemesterStartDate string   `json:"semester_start_date"`
-	DutyGroupSize     int      `json:"duty_group_size"`
-	LunchGroupSize    int      `json:"lunch_group_size"`
-	DutyStartNumber   int      `json:"duty_start_number"`
-	LunchStartNumber  int      `json:"lunch_start_number"`
-	AutoStart         bool     `json:"auto_start"`
-	MealBuckets       []string `json:"meal_buckets"`
-	CountdownTimes    []string `json:"countdown_times"`
-	PeriodTimes       []string `json:"period_times"`
-	CountdownMusic    string   `json:"countdown_music"`
-	CountdownVolume   float64  `json:"countdown_volume"`
+	SemesterStartDate     string               `json:"semester_start_date"`
+	DutyGroupSize         int                  `json:"duty_group_size"`
+	LunchGroupSize        int                  `json:"lunch_group_size"`
+	DutyStartNumber       int                  `json:"duty_start_number"`
+	LunchStartNumber      int                  `json:"lunch_start_number"`
+	AutoStart             bool                 `json:"auto_start"`
+	MealBuckets           []string             `json:"meal_buckets"`
+	CountdownTimes        []string             `json:"countdown_times"`
+	PeriodTimes           []string             `json:"period_times"`
+	CountdownVolume       float64              `json:"countdown_volume"`
+	CountdownMusics       []MusicTrack         `json:"countdown_musics"`
+	CountdownTimeMusicMap []CountdownTimeMusic `json:"countdown_time_music_map"`
 }
 
 // Config is the top-level JSON structure persisted to config.json.

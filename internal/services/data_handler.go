@@ -112,6 +112,14 @@ func (dh *DataHandler) migrateConfig(config *models.Config) bool {
 			config.Settings.LunchStartNumber = 1
 			updated = true
 		}
+		if oldMusic, ok := rawConfig.Settings["countdown_music"].(string); ok && oldMusic != "" {
+			if len(config.Settings.CountdownMusics) == 0 {
+				config.Settings.CountdownMusics = []models.MusicTrack{
+					{Path: oldMusic, InRandom: true},
+				}
+				updated = true
+			}
+		}
 	}
 
 	// Migrate 7-period timetable → 8-period (insert 午休 at index 4)
@@ -160,6 +168,12 @@ func (dh *DataHandler) loadConfigUnsafe() (models.Config, error) {
 	}
 	if config.Settings.PeriodTimes == nil {
 		config.Settings.PeriodTimes = []string{}
+	}
+	if config.Settings.CountdownMusics == nil {
+		config.Settings.CountdownMusics = []models.MusicTrack{}
+	}
+	if config.Settings.CountdownTimeMusicMap == nil {
+		config.Settings.CountdownTimeMusicMap = []models.CountdownTimeMusic{}
 	}
 	return config, err
 }

@@ -56,12 +56,16 @@
   async function startCountdown(triggerTime: string) {
     countdownTriggerTime = triggerTime;
     showCountdown = true;
-    await SetFullscreen(true);
+    if (!showDisplay) {
+      await SetFullscreen(true);
+    }
   }
 
   async function onCountdownFinished() {
     showCountdown = false;
-    await SetFullscreen(false);
+    if (!showDisplay) {
+      await SetFullscreen(false);
+    }
   }
 
   async function enterDisplayMode() {

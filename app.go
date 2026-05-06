@@ -335,8 +335,12 @@ func (a *App) ExportSchedule() (string, error) {
 // SetFullscreen toggles the window fullscreen state.
 func (a *App) SetFullscreen(enabled bool) {
 	if enabled {
+		runtime.WindowUnminimise(a.ctx)
+		runtime.WindowShow(a.ctx)
+		runtime.WindowSetAlwaysOnTop(a.ctx, true)
 		runtime.WindowFullscreen(a.ctx)
 	} else {
+		runtime.WindowSetAlwaysOnTop(a.ctx, false)
 		runtime.WindowUnfullscreen(a.ctx)
 	}
 }

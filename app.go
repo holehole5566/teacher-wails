@@ -400,6 +400,10 @@ func (a *App) GetActiveCountdownMusicData(triggerTime string) (string, error) {
 		}
 	}
 
+	if mode == "none" {
+		return "", nil
+	}
+
 	if mode == "index" {
 		if selectedIndex < 0 || selectedIndex >= len(settings.CountdownMusics) {
 			return "", fmt.Errorf("指定的音樂索引無效")
@@ -445,6 +449,22 @@ func (a *App) readMusicFile(path string) (string, error) {
 		return "", fmt.Errorf("檔案不是有效的 MP3 格式")
 	}
 	return "data:audio/mpeg;base64," + base64.StdEncoding.EncodeToString(data), nil
+}
+
+// ReportError sends an error message to the configured Discord webhook.
+func (a *App) ReportError(msg string) {
+	settings, err := a.dh.GetSettings()
+	if err != nil || settings.DiscordWebhook == "" {
+		return
+	}
+	hostname, _ := os.Hostname()
+	body, _ := json.Marshal(map[string]string{
+		"content": fmt.Sprintf("🚨 **TeacherApp 錯誤**\n機器：`%s`\n時間：`%s`\n錯誤：%s", hostname, time.Now().Format("2006-01-02 15:04:05"), msg),
+	})
+	resp, err := http.Post(settings.DiscordWebhook, "application/json", strings.NewReader(string(body)))
+	if err == nil {
+		resp.Body.Close()
+	}
 }
 
 // isMP3 checks if data starts with valid MP3 magic bytes (ID3 tag or MPEG sync word).

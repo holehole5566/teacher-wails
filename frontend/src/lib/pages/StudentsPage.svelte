@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { GetStudents, AddStudent, DeleteStudent, ToggleDuty, ToggleLunch } from '../../../wailsjs/go/main/App';
+  import { GetStudents, AddStudent, DeleteStudent, ToggleDuty, ToggleLunch, ReportError } from '../../../wailsjs/go/main/App';
 
   let students: any[] = [];
   let newSeat = '';
@@ -26,6 +26,7 @@
       await loadStudents();
     } catch (e: any) {
       errorMsg = e?.message || String(e);
+      ReportError(`新增學生失敗：${e?.message || e}`);
     }
   }
 

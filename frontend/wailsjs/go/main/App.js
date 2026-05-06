@@ -54,6 +54,10 @@ export function GetTodayDuty() {
   return window['go']['main']['App']['GetTodayDuty']();
 }
 
+export function ReportError(arg1) {
+  return window['go']['main']['App']['ReportError'](arg1);
+}
+
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }
@@ -64,10 +68,6 @@ export function SaveTimetable(arg1) {
 
 export function SelectCountdownMusics() {
   return window['go']['main']['App']['SelectCountdownMusics']();
-}
-
-export function ValidateRandomPool() {
-  return window['go']['main']['App']['ValidateRandomPool']();
 }
 
 export function SetFullscreen(arg1) {
@@ -84,4 +84,8 @@ export function ToggleDuty(arg1) {
 
 export function ToggleLunch(arg1) {
   return window['go']['main']['App']['ToggleLunch'](arg1);
+}
+
+export function ValidateRandomPool() {
+  return window['go']['main']['App']['ValidateRandomPool']();
 }

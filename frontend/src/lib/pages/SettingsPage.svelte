@@ -20,6 +20,7 @@
   let countdownMusics: MusicTrack[] = [];
   let countdownTimeMusicMap: CountdownTimeMusic[] = [];
   let countdownVolume = 0.5;
+  let discordWebhook = '';
   let testAudios: (HTMLAudioElement | null)[] = [];
 
   async function loadSettings() {
@@ -34,6 +35,7 @@
     countdownMusics = (s.countdown_musics || []).map((t: any) => ({ path: t.path, in_random: t.in_random }));
     countdownTimeMusicMap = (s.countdown_time_music_map || []).map((m: any) => ({ time: m.time, mode: m.mode || 'random', index: m.index || 0 }));
     countdownVolume = s.countdown_volume > 0 ? s.countdown_volume : 0.5;
+    discordWebhook = s.discord_webhook || '';
     testAudios = countdownMusics.map(() => null);
     rebuildTimeMusicSettings();
     const pt = s.period_times || [];
@@ -178,6 +180,7 @@
       countdown_volume: countdownVolume,
       countdown_musics: countdownMusics,
       countdown_time_music_map: countdownTimeMusicMap,
+      discord_webhook: discordWebhook,
     });
     saved = true;
     setTimeout(() => { saved = false; }, 2000);
@@ -256,6 +259,7 @@
                 >
                   <option value="random">隨機</option>
                   <option value="index">指定</option>
+                  <option value="none">不播放</option>
                 </select>
                 {#if timeMusicSettings[t].mode === 'index'}
                   <select
@@ -305,6 +309,11 @@
       {:else}
         <p class="empty-hint">尚未加入任何音樂</p>
       {/if}
+    </div>
+
+    <div class="form-group">
+      <label>Discord Webhook（錯誤通知用）</label>
+      <input type="text" bind:value={discordWebhook} placeholder="https://discord.com/api/webhooks/..." />
     </div>
 
     <div class="form-actions">

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { GetActiveCountdownMusicData, GetSettings } from '../../../wailsjs/go/main/App';
+  import { GetActiveCountdownMusicData, GetSettings, ReportError } from '../../../wailsjs/go/main/App';
 
   export let seconds: number = 60;
   export let triggerTime: string = '';
@@ -34,9 +34,11 @@
       if (dataUrl) {
         audio = new Audio(dataUrl);
         audio.volume = settings.countdown_volume > 0 ? settings.countdown_volume : 0.5;
-        audio.play().catch(() => {});
+        audio.play().catch((e: any) => ReportError(`音樂播放失敗（triggerTime=${triggerTime}）：${e?.message || e}`));
       }
-    } catch {}
+    } catch (e: any) {
+      ReportError(`倒數音樂載入失敗（triggerTime=${triggerTime}）：${e?.message || e}`);
+    }
   });
 
   onDestroy(() => {

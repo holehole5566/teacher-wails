@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { GetHolidays, AddHoliday, DeleteHoliday, ClearHolidays, SyncHolidays } from '../../../wailsjs/go/main/App';
+  import { GetHolidays, AddHoliday, DeleteHoliday, ClearHolidays, SyncHolidays, ReportError } from '../../../wailsjs/go/main/App';
 
   let holidays: string[] = [];
   let newDate = '';
@@ -34,7 +34,8 @@
       const added = await SyncHolidays();
       await loadHolidays();
       alert(`同步完成，新增 ${added} 筆假期`);
-    } catch (e) {
+    } catch (e: any) {
+      ReportError(`假期同步失敗：${e?.message || e}`);
       alert('同步失敗: ' + e);
     } finally {
       syncing = false;

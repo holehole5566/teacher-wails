@@ -28,13 +28,13 @@ export function GetTimetable():Promise<any>;
 
 export function GetTodayDuty():Promise<models.TodayDutyResult>;
 
+export function ReportError(arg1:string):Promise<void>;
+
 export function SaveSettings(arg1:models.Settings):Promise<void>;
 
 export function SaveTimetable(arg1:any):Promise<void>;
 
 export function SelectCountdownMusics():Promise<Array<string>>;
-
-export function ValidateRandomPool():Promise<boolean>;
 
 export function SetFullscreen(arg1:boolean):Promise<void>;
 
@@ -43,3 +43,5 @@ export function SyncHolidays():Promise<number>;
 export function ToggleDuty(arg1:number):Promise<void>;
 
 export function ToggleLunch(arg1:number):Promise<void>;
+
+export function ValidateRandomPool():Promise<boolean>;

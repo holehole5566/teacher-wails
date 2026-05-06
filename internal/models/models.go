@@ -35,6 +35,7 @@ type Settings struct {
 	CountdownVolume       float64              `json:"countdown_volume"`
 	CountdownMusics       []MusicTrack         `json:"countdown_musics"`
 	CountdownTimeMusicMap []CountdownTimeMusic `json:"countdown_time_music_map"`
+	DiscordWebhook        string               `json:"discord_webhook"`
 }
 
 // Config is the top-level JSON structure persisted to config.json.

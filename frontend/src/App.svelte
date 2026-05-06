@@ -9,7 +9,7 @@
   import SettingsPage from './lib/pages/SettingsPage.svelte';
   import HolidaysPage from './lib/pages/HolidaysPage.svelte';
   import TimetablePage from './lib/pages/TimetablePage.svelte';
-  import { ExportSchedule, GetSettings, SetFullscreen } from '../wailsjs/go/main/App';
+  import { ExportSchedule, GetSettings, SetFullscreen, ReportError } from '../wailsjs/go/main/App';
 
   let currentPage = 'home';
   let homeRef: HomePage;
@@ -85,7 +85,8 @@
       try {
         const path = await ExportSchedule();
         if (path) alert(`已匯出至: ${path}`);
-      } catch (e) {
+      } catch (e: any) {
+        ReportError(`排班匯出失敗：${e?.message || e}`);
         alert('匯出失敗: ' + e);
       }
       return;

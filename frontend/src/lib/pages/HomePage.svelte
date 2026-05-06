@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import StudentPicker from '../components/StudentPicker.svelte';
-  import { GetTodayDuty, GetStudents, GetTimetable, GetSettings } from '../../../wailsjs/go/main/App';
+  import { GetTodayDuty, GetStudents, GetTimetable, GetSettings, ReportError } from '../../../wailsjs/go/main/App';
 
   const periodLabels = ['1', '2', '3', '4', '午休', '5', '6', '7'];
 
@@ -23,6 +23,7 @@
   let todayClasses: { period: string; subject: string; idx: number }[] = [];
   let currentPeriod = -1;
   let periodTimes: string[] = [];
+  let clockInterval: ReturnType<typeof setInterval>;
 
   export async function refresh() {
     loading = true;
@@ -55,8 +56,8 @@
         }
       }
       updateCurrentPeriod();
-    } catch (e) {
-      console.error('Failed to load:', e);
+    } catch (e: any) {
+      ReportError(`首頁資料載入失敗：${e?.message || e}`);
     }
     loading = false;
   }
@@ -106,7 +107,12 @@
     lunchModified = false;
   }
 
-  onMount(refresh);
+  onMount(() => {
+    refresh();
+    clockInterval = setInterval(updateCurrentPeriod, 1000);
+  });
+
+  onDestroy(() => clearInterval(clockInterval));
 </script>
 
 {#if showPicker}

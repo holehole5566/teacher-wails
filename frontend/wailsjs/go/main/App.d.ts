@@ -8,6 +8,8 @@ export function AddStudent(arg1:number,arg2:string):Promise<void>;
 
 export function ClearHolidays():Promise<void>;
 
+export function DebugLog(arg1:string):Promise<void>;
+
 export function DeleteHoliday(arg1:string):Promise<void>;
 
 export function DeleteStudent(arg1:number):Promise<void>;

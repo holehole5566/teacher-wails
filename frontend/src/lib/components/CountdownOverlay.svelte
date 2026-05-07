@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { GetActiveCountdownMusicData, GetSettings, ReportError } from '../../../wailsjs/go/main/App';
+  import { GetActiveCountdownMusicData, GetSettings, ReportError, DebugLog } from '../../../wailsjs/go/main/App';
 
   export let seconds: number = 60;
   export let triggerTime: string = '';
@@ -26,17 +26,30 @@
   }
 
   onMount(async () => {
+    DebugLog(`[Countdown] onMount triggered, triggerTime=${triggerTime}, seconds=${seconds}`);
     try {
+      DebugLog(`[Countdown] Calling GetActiveCountdownMusicData...`);
       const [dataUrl, settings] = await Promise.all([
         GetActiveCountdownMusicData(triggerTime),
         GetSettings()
       ]);
+      DebugLog(`[Countdown] GetActiveCountdownMusicData returned, dataUrl length=${dataUrl?.length || 0}`);
       if (dataUrl) {
         audio = new Audio(dataUrl);
-        audio.volume = settings.countdown_volume > 0 ? settings.countdown_volume : 0.5;
-        audio.play().catch((e: any) => ReportError(`音樂播放失敗（triggerTime=${triggerTime}）：${e?.message || e}`));
+        const vol = settings.countdown_volume > 0 ? settings.countdown_volume : 0.5;
+        audio.volume = vol;
+        DebugLog(`[Countdown] Audio created, volume=${vol}, attempting play...`);
+        audio.play().then(() => {
+          DebugLog(`[Countdown] Audio play() succeeded`);
+        }).catch((e: any) => {
+          DebugLog(`[Countdown] Audio play() FAILED: ${e?.message || e}`);
+          ReportError(`音樂播放失敗（triggerTime=${triggerTime}）：${e?.message || e}`);
+        });
+      } else {
+        DebugLog(`[Countdown] dataUrl is empty, no music to play`);
       }
     } catch (e: any) {
+      DebugLog(`[Countdown] CATCH error: ${e?.message || e}`);
       ReportError(`倒數音樂載入失敗（triggerTime=${triggerTime}）：${e?.message || e}`);
     }
   });

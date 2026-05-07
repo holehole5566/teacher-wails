@@ -14,6 +14,10 @@ export function ClearHolidays() {
   return window['go']['main']['App']['ClearHolidays']();
 }
 
+export function DebugLog(arg1) {
+  return window['go']['main']['App']['DebugLog'](arg1);
+}
+
 export function DeleteHoliday(arg1) {
   return window['go']['main']['App']['DeleteHoliday'](arg1);
 }

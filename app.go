@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-	"math/rand"
+	"sync"
 	"teacher-wails/internal/models"
 	"teacher-wails/internal/services"
 	"time"
@@ -22,11 +24,39 @@ import (
 
 // App is the main application struct bound to the frontend.
 type App struct {
-	ctx context.Context
-	dh  *services.DataHandler
-	sm  *services.StudentManager
-	dc  *services.DutyCalculator
-	se  *services.ScheduleExporter
+	ctx       context.Context
+	dh        *services.DataHandler
+	sm        *services.StudentManager
+	dc        *services.DutyCalculator
+	se        *services.ScheduleExporter
+	logFile   *os.File
+	logger    *log.Logger
+	logOnce   sync.Once
+}
+
+func (a *App) initLogger() {
+	exe, _ := os.Executable()
+	logDir := filepath.Join(filepath.Dir(exe), "logs")
+	os.MkdirAll(logDir, 0755)
+	logPath := filepath.Join(logDir, time.Now().Format("2006-01-02")+".log")
+	f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	a.logFile = f
+	a.logger = log.New(f, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+}
+
+func (a *App) debugLog(format string, args ...interface{}) {
+	a.logOnce.Do(a.initLogger)
+	if a.logger != nil {
+		a.logger.Printf(format, args...)
+	}
+}
+
+// DebugLog allows frontend to write debug messages to the log file.
+func (a *App) DebugLog(msg string) {
+	a.debugLog("[frontend] %s", msg)
 }
 
 // NewApp creates a new App instance.
@@ -386,11 +416,17 @@ func (a *App) GetCountdownMusicData(index int) (string, error) {
 // to play at the given countdown time. Random mode picks from InRandom tracks;
 // index mode picks the specified track.
 func (a *App) GetActiveCountdownMusicData(triggerTime string) (string, error) {
+	a.debugLog("[Music] GetActiveCountdownMusicData called, triggerTime=%q", triggerTime)
+
 	settings, err := a.dh.GetSettings()
 	if err != nil {
+		a.debugLog("[Music] ERROR: GetSettings failed: %v", err)
 		return "", err
 	}
+	a.debugLog("[Music] CountdownMusics count=%d, TimeMusicMap count=%d", len(settings.CountdownMusics), len(settings.CountdownTimeMusicMap))
+
 	if len(settings.CountdownMusics) == 0 {
+		a.debugLog("[Music] No music configured, returning empty")
 		return "", nil
 	}
 
@@ -403,16 +439,27 @@ func (a *App) GetActiveCountdownMusicData(triggerTime string) (string, error) {
 			break
 		}
 	}
+	a.debugLog("[Music] Resolved mode=%q, selectedIndex=%d for time=%q", mode, selectedIndex, triggerTime)
 
 	if mode == "none" {
+		a.debugLog("[Music] Mode is none, returning empty")
 		return "", nil
 	}
 
 	if mode == "index" {
 		if selectedIndex < 0 || selectedIndex >= len(settings.CountdownMusics) {
+			a.debugLog("[Music] ERROR: index %d out of range (total=%d)", selectedIndex, len(settings.CountdownMusics))
 			return "", fmt.Errorf("指定的音樂索引無效")
 		}
-		return a.readMusicFile(settings.CountdownMusics[selectedIndex].Path)
+		path := settings.CountdownMusics[selectedIndex].Path
+		a.debugLog("[Music] Index mode: reading file %q", path)
+		result, err := a.readMusicFile(path)
+		if err != nil {
+			a.debugLog("[Music] ERROR: readMusicFile failed: %v", err)
+			return "", err
+		}
+		a.debugLog("[Music] Success: returning data URL (len=%d)", len(result))
+		return result, nil
 	}
 
 	var pool []string
@@ -421,10 +468,20 @@ func (a *App) GetActiveCountdownMusicData(triggerTime string) (string, error) {
 			pool = append(pool, t.Path)
 		}
 	}
+	a.debugLog("[Music] Random mode: pool size=%d", len(pool))
 	if len(pool) == 0 {
+		a.debugLog("[Music] ERROR: random pool is empty")
 		return "", fmt.Errorf("隨機清單為空")
 	}
-	return a.readMusicFile(pool[rand.Intn(len(pool))])
+	chosen := pool[rand.Intn(len(pool))]
+	a.debugLog("[Music] Random chose: %q", chosen)
+	result, err := a.readMusicFile(chosen)
+	if err != nil {
+		a.debugLog("[Music] ERROR: readMusicFile failed: %v", err)
+		return "", err
+	}
+	a.debugLog("[Music] Success: returning data URL (len=%d)", len(result))
+	return result, nil
 }
 
 // ValidateRandomPool returns true if at least one track has InRandom==true and its file exists.

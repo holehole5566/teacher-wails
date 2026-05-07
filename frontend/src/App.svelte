@@ -9,7 +9,7 @@
   import SettingsPage from './lib/pages/SettingsPage.svelte';
   import HolidaysPage from './lib/pages/HolidaysPage.svelte';
   import TimetablePage from './lib/pages/TimetablePage.svelte';
-  import { ExportSchedule, GetSettings, SetFullscreen, ReportError } from '../wailsjs/go/main/App';
+  import { ExportSchedule, GetSettings, SetFullscreen, ReportError, DebugLog } from '../wailsjs/go/main/App';
 
   let currentPage = 'home';
   let homeRef: HomePage;
@@ -23,6 +23,7 @@
   async function loadCountdownTimes() {
     const s = await GetSettings();
     countdownTimes = s.countdown_times || [];
+    DebugLog(`[App] loadCountdownTimes: ${JSON.stringify(countdownTimes)}`);
   }
 
   function checkCountdown() {
@@ -46,6 +47,7 @@
 
       const key = `${todayKey}-${t}`;
       if (currentHHMM === triggerHHMM && !triggeredToday.has(key) && !showCountdown) {
+        DebugLog(`[App] Countdown TRIGGERED: currentHHMM=${currentHHMM}, target=${t}, key=${key}`);
         triggeredToday.add(key);
         startCountdown(t);
         break;
@@ -54,6 +56,7 @@
   }
 
   async function startCountdown(triggerTime: string) {
+    DebugLog(`[App] startCountdown called, triggerTime=${triggerTime}, showDisplay=${showDisplay}`);
     countdownTriggerTime = triggerTime;
     showCountdown = true;
     if (!showDisplay) {

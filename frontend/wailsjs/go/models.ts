@@ -94,6 +94,7 @@ export namespace models {
 	    countdown_musics: MusicTrack[];
 	    countdown_time_music_map: CountdownTimeMusic[];
 	    discord_webhook: string;
+	    audio_output_device: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -114,6 +115,7 @@ export namespace models {
 	        this.countdown_musics = this.convertValues(source["countdown_musics"], MusicTrack);
 	        this.countdown_time_music_map = this.convertValues(source["countdown_time_music_map"], CountdownTimeMusic);
 	        this.discord_webhook = source["discord_webhook"];
+	        this.audio_output_device = source["audio_output_device"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

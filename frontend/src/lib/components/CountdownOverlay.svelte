@@ -38,9 +38,28 @@
         audio = new Audio(dataUrl);
         const vol = settings.countdown_volume > 0 ? settings.countdown_volume : 0.5;
         audio.volume = vol;
-        DebugLog(`[Countdown] Audio created, volume=${vol}, attempting play...`);
+
+        // Set audio output device
+        const deviceId = settings.audio_output_device || 'default';
+        try {
+          await (audio as any).setSinkId(deviceId);
+          DebugLog(`[Countdown] setSinkId("${deviceId}") succeeded`);
+        } catch (e: any) {
+          DebugLog(`[Countdown] setSinkId("${deviceId}") failed: ${e?.message || e}, using default`);
+        }
+
+        // Log audio device info
+        const sinkId = (audio as any).sinkId ?? 'unknown';
+        DebugLog(`[Countdown] Audio created, volume=${vol}, sinkId="${sinkId}"`);
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const outputs = devices.filter(d => d.kind === 'audiooutput');
+          DebugLog(`[Countdown] Available outputs: ${outputs.map(d => `${d.label}(${d.deviceId.slice(0,8)})`).join(', ')}`);
+        } catch {}
+
+        DebugLog(`[Countdown] Attempting play...`);
         audio.play().then(() => {
-          DebugLog(`[Countdown] Audio play() succeeded`);
+          DebugLog(`[Countdown] Audio play() succeeded, sinkId="${(audio as any)?.sinkId ?? 'unknown'}"`);
         }).catch((e: any) => {
           DebugLog(`[Countdown] Audio play() FAILED: ${e?.message || e}`);
           ReportError(`音樂播放失敗（triggerTime=${triggerTime}）：${e?.message || e}`);

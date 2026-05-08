@@ -10,49 +10,18 @@
   import HolidaysPage from './lib/pages/HolidaysPage.svelte';
   import TimetablePage from './lib/pages/TimetablePage.svelte';
   import { ExportSchedule, GetSettings, SetFullscreen, ReportError, DebugLog } from '../wailsjs/go/main/App';
+  import { EventsOn, EventsOff } from '../wailsjs/runtime/runtime';
 
   let currentPage = 'home';
   let homeRef: HomePage;
   let showCountdown = false;
   let showDisplay = false;
   let countdownTriggerTime = '';
-  let countdownTimes: string[] = [];
-  let triggeredToday = new Set<string>();
-  let checkInterval: ReturnType<typeof setInterval>;
 
-  async function loadCountdownTimes() {
-    const s = await GetSettings();
-    countdownTimes = s.countdown_times || [];
-    DebugLog(`[App] loadCountdownTimes: ${JSON.stringify(countdownTimes)}`);
-  }
-
-  function checkCountdown() {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    const currentHHMM = `${hh}:${mm}`;
-    const todayKey = now.toDateString();
-
-    if (triggeredToday.size > 0 && !Array.from(triggeredToday).some(k => k.startsWith(todayKey))) {
-      triggeredToday = new Set();
-    }
-
-    for (const t of countdownTimes) {
-      const [th, tm] = t.split(':').map(Number);
-      let triggerH = th;
-      let triggerM = tm - 1;
-      if (triggerM < 0) { triggerM = 59; triggerH--; }
-      if (triggerH < 0) triggerH = 23;
-      const triggerHHMM = `${String(triggerH).padStart(2, '0')}:${String(triggerM).padStart(2, '0')}`;
-
-      const key = `${todayKey}-${t}`;
-      if (currentHHMM === triggerHHMM && !triggeredToday.has(key) && !showCountdown) {
-        DebugLog(`[App] Countdown TRIGGERED: currentHHMM=${currentHHMM}, target=${t}, key=${key}`);
-        triggeredToday.add(key);
-        startCountdown(t);
-        break;
-      }
-    }
+  function onCountdownTrigger(triggerTime: string) {
+    if (showCountdown) return;
+    DebugLog(`[App] Countdown TRIGGERED from backend: triggerTime=${triggerTime}`);
+    startCountdown(triggerTime);
   }
 
   async function startCountdown(triggerTime: string) {
@@ -104,17 +73,15 @@
     }
     currentPage = page;
     if (page === 'home' && homeRef) homeRef.refresh();
-    if (page !== 'settings') loadCountdownTimes();
   }
 
   onMount(() => {
-    loadCountdownTimes();
-    checkInterval = setInterval(checkCountdown, 1000);
+    EventsOn('countdown-trigger', onCountdownTrigger);
     window.addEventListener('keydown', handleKeydown);
   });
 
   onDestroy(() => {
-    clearInterval(checkInterval);
+    EventsOff('countdown-trigger');
     window.removeEventListener('keydown', handleKeydown);
   });
 </script>

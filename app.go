@@ -95,6 +95,58 @@ func (a *App) startup(ctx context.Context) {
 	a.sm = services.NewStudentManager(a.dh)
 	a.dc = services.NewDutyCalculator(a.dh, a.sm)
 	a.se = services.NewScheduleExporter(a.dc)
+
+	go a.countdownWatcher()
+}
+
+func (a *App) countdownWatcher() {
+	triggeredToday := make(map[string]bool)
+	var lastDate string
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		now := time.Now()
+		today := now.Format("2006-01-02")
+		if today != lastDate {
+			triggeredToday = make(map[string]bool)
+			lastDate = today
+		}
+
+		settings, err := a.dh.GetSettings()
+		if err != nil || len(settings.CountdownTimes) == 0 {
+			continue
+		}
+
+		currentHHMM := now.Format("15:04")
+
+		for _, t := range settings.CountdownTimes {
+			parts := strings.Split(t, ":")
+			if len(parts) != 2 {
+				continue
+			}
+			var h, m int
+			fmt.Sscanf(parts[0], "%d", &h)
+			fmt.Sscanf(parts[1], "%d", &m)
+			m--
+			if m < 0 {
+				m = 59
+				h--
+			}
+			if h < 0 {
+				h = 23
+			}
+			triggerHHMM := fmt.Sprintf("%02d:%02d", h, m)
+
+			key := today + "-" + t
+			if currentHHMM == triggerHHMM && !triggeredToday[key] {
+				triggeredToday[key] = true
+				a.debugLog("[Watcher] Emitting countdown-trigger for time=%s at %s", t, now.Format("15:04:05"))
+				runtime.EventsEmit(a.ctx, "countdown-trigger", t)
+			}
+		}
+	}
 }
 
 // GetTodayDuty returns today's duty and lunch assignments.

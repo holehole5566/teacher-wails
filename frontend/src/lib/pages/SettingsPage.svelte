@@ -21,6 +21,24 @@
   let countdownTimeMusicMap: CountdownTimeMusic[] = [];
   let countdownVolume = 0.5;
   let discordWebhook = '';
+  let audioOutputDevice = '';
+  let audioDevices: { deviceId: string; label: string }[] = [];
+
+  async function refreshAudioDevices() {
+    try {
+      // Try to get permission to see full device labels
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+      } catch {}
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      audioDevices = devices
+        .filter(d => d.kind === 'audiooutput' && !d.label.startsWith('通訊') && !d.label.startsWith('預設'))
+        .map(d => ({ deviceId: d.deviceId, label: d.label || `未知裝置 (${d.deviceId.slice(0, 8)})` }));
+    } catch {
+      audioDevices = [];
+    }
+  }
   let testAudios: (HTMLAudioElement | null)[] = [];
 
   async function loadSettings() {
@@ -36,6 +54,8 @@
     countdownTimeMusicMap = (s.countdown_time_music_map || []).map((m: any) => ({ time: m.time, mode: m.mode || 'random', index: m.index || 0 }));
     countdownVolume = s.countdown_volume > 0 ? s.countdown_volume : 0.5;
     discordWebhook = s.discord_webhook || '';
+    audioOutputDevice = s.audio_output_device || '';
+    await refreshAudioDevices();
     testAudios = countdownMusics.map(() => null);
     rebuildTimeMusicSettings();
     const pt = s.period_times || [];
@@ -89,6 +109,8 @@
       if (!url) return;
       const a = new Audio(url);
       a.volume = countdownVolume;
+      const deviceId = audioOutputDevice || 'default';
+      try { await (a as any).setSinkId(deviceId); } catch {}
       a.onended = () => { testAudios[i] = null; testAudios = [...testAudios]; };
       testAudios[i] = a;
       testAudios = [...testAudios];
@@ -181,6 +203,7 @@
       countdown_musics: countdownMusics,
       countdown_time_music_map: countdownTimeMusicMap,
       discord_webhook: discordWebhook,
+      audio_output_device: audioOutputDevice,
     });
     saved = true;
     setTimeout(() => { saved = false; }, 2000);
@@ -309,6 +332,19 @@
       {:else}
         <p class="empty-hint">尚未加入任何音樂</p>
       {/if}
+    </div>
+
+    <div class="form-group">
+      <label>音訊輸出裝置</label>
+      <div class="inline-form">
+        <select bind:value={audioOutputDevice} style="flex:1">
+          <option value="">跟隨系統預設（每次播放時刷新）</option>
+          {#each audioDevices as device}
+            <option value={device.deviceId}>{device.label}</option>
+          {/each}
+        </select>
+        <button class="btn-primary btn-sm" on:click={refreshAudioDevices}>重新偵測</button>
+      </div>
     </div>
 
     <div class="form-group">

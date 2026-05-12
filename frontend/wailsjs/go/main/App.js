@@ -10,6 +10,10 @@ export function AddStudent(arg1, arg2) {
   return window['go']['main']['App']['AddStudent'](arg1, arg2);
 }
 
+export function CheckForUpdate() {
+  return window['go']['main']['App']['CheckForUpdate']();
+}
+
 export function ClearHolidays() {
   return window['go']['main']['App']['ClearHolidays']();
 }
@@ -26,6 +30,10 @@ export function DeleteStudent(arg1) {
   return window['go']['main']['App']['DeleteStudent'](arg1);
 }
 
+export function DoUpdate() {
+  return window['go']['main']['App']['DoUpdate']();
+}
+
 export function ExportSchedule() {
   return window['go']['main']['App']['ExportSchedule']();
 }
@@ -36,6 +44,10 @@ export function GetActiveCountdownMusicData(arg1) {
 
 export function GetCountdownMusicData(arg1) {
   return window['go']['main']['App']['GetCountdownMusicData'](arg1);
+}
+
+export function GetCurrentVersion() {
+  return window['go']['main']['App']['GetCurrentVersion']();
 }
 
 export function GetHolidays() {

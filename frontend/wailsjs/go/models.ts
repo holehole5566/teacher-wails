@@ -1,3 +1,26 @@
+export namespace main {
+	
+	export class UpdateResult {
+	    has_update: boolean;
+	    current_version: string;
+	    latest_version: string;
+	    release_notes: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.has_update = source["has_update"];
+	        this.current_version = source["current_version"];
+	        this.latest_version = source["latest_version"];
+	        this.release_notes = source["release_notes"];
+	    }
+	}
+
+}
+
 export namespace models {
 	
 	export class CountdownTimeMusic {

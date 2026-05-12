@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { GetSettings, SaveSettings, SelectCountdownMusics, GetCountdownMusicData, ValidateRandomPool } from '../../../wailsjs/go/main/App';
+  import { GetSettings, SaveSettings, SelectCountdownMusics, GetCountdownMusicData, ValidateRandomPool, GetCurrentVersion, CheckForUpdate, DoUpdate } from '../../../wailsjs/go/main/App';
 
   let semesterStart = '';
   let dutyGroupSize = 2;
@@ -23,6 +23,11 @@
   let discordWebhook = '';
   let audioOutputDevice = '';
   let audioDevices: { deviceId: string; label: string }[] = [];
+
+  let currentVersion = '';
+  let updateStatus: 'idle' | 'checking' | 'available' | 'updating' | 'upToDate' | 'error' = 'idle';
+  let latestVersion = '';
+  let updateError = '';
 
   async function refreshAudioDevices() {
     try {
@@ -209,7 +214,37 @@
     setTimeout(() => { saved = false; }, 2000);
   }
 
-  onMount(loadSettings);
+  async function checkUpdate() {
+    updateStatus = 'checking';
+    updateError = '';
+    try {
+      const result = await CheckForUpdate();
+      if (result.has_update) {
+        updateStatus = 'available';
+        latestVersion = result.latest_version;
+      } else {
+        updateStatus = 'upToDate';
+      }
+    } catch (e: any) {
+      updateStatus = 'error';
+      updateError = e?.message || '檢查更新失敗';
+    }
+  }
+
+  async function doUpdate() {
+    updateStatus = 'updating';
+    try {
+      await DoUpdate();
+    } catch (e: any) {
+      updateStatus = 'error';
+      updateError = e?.message || '更新失敗';
+    }
+  }
+
+  onMount(async () => {
+    await loadSettings();
+    currentVersion = await GetCurrentVersion();
+  });
 </script>
 
 <div class="page">
@@ -356,6 +391,29 @@
       <button class="btn-primary save-btn" on:click={handleSave}>儲存設定</button>
       {#if saved}
         <span class="save-ok">已儲存</span>
+      {/if}
+    </div>
+  </div>
+
+  <div class="card update-section">
+    <h3 class="section-title">軟體更新</h3>
+    <div class="update-row">
+      <span class="version-info">目前版本：{currentVersion || '載入中...'}</span>
+      {#if updateStatus === 'idle'}
+        <button class="btn-primary btn-sm" on:click={checkUpdate}>檢查更新</button>
+      {:else if updateStatus === 'checking'}
+        <span class="update-msg">檢查中...</span>
+      {:else if updateStatus === 'upToDate'}
+        <span class="update-msg update-ok">已是最新版本</span>
+        <button class="btn-primary btn-sm" on:click={checkUpdate}>重新檢查</button>
+      {:else if updateStatus === 'available'}
+        <span class="update-msg">有新版本：{latestVersion}</span>
+        <button class="btn-primary btn-sm" on:click={doUpdate}>立即更新</button>
+      {:else if updateStatus === 'updating'}
+        <span class="update-msg">更新中，請稍候...</span>
+      {:else if updateStatus === 'error'}
+        <span class="update-msg update-err">{updateError}</span>
+        <button class="btn-primary btn-sm" on:click={checkUpdate}>重試</button>
       {/if}
     </div>
   </div>
@@ -539,5 +597,33 @@
     font-size: 12px;
     color: var(--text-secondary);
     min-width: 36px;
+  }
+  .update-section {
+    max-width: 560px;
+    margin-top: 16px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .update-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .version-info {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .update-msg {
+    font-size: 13px;
+  }
+  .update-ok {
+    color: var(--success);
+  }
+  .update-err {
+    color: var(--danger);
   }
 </style>

@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"teacher-wails/internal/services"
 	"time"
 
+	selfupdate "github.com/creativeprojects/go-selfupdate"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -594,4 +596,97 @@ func isMP3(data []byte) bool {
 		return true
 	}
 	return false
+}
+
+// UpdateResult holds information about an available update.
+type UpdateResult struct {
+	HasUpdate      bool   `json:"has_update"`
+	CurrentVersion string `json:"current_version"`
+	LatestVersion  string `json:"latest_version"`
+	ReleaseNotes   string `json:"release_notes"`
+}
+
+// GetCurrentVersion returns the current app version.
+func (a *App) GetCurrentVersion() string {
+	return version
+}
+
+// CheckForUpdate checks GitHub for a newer release.
+func (a *App) CheckForUpdate() (UpdateResult, error) {
+	updater, err := selfupdate.NewUpdater(selfupdate.Config{
+		Filters: []string{"teacher-wails.exe"},
+	})
+	if err != nil {
+		return UpdateResult{}, fmt.Errorf("初始化更新器失敗: %w", err)
+	}
+
+	latest, found, err := updater.DetectLatest(context.Background(), selfupdate.ParseSlug("holehole5566/teacher-helper"))
+	if err != nil {
+		return UpdateResult{}, fmt.Errorf("檢查更新失敗: %w", err)
+	}
+
+	currentVersion := version
+	if currentVersion == "dev" {
+		return UpdateResult{
+			HasUpdate:      false,
+			CurrentVersion: currentVersion,
+			LatestVersion:  "unknown",
+		}, nil
+	}
+
+	if !found {
+		return UpdateResult{
+			HasUpdate:      false,
+			CurrentVersion: currentVersion,
+		}, nil
+	}
+
+	if latest.LessOrEqual(currentVersion) {
+		return UpdateResult{
+			HasUpdate:      false,
+			CurrentVersion: currentVersion,
+			LatestVersion:  latest.Version(),
+		}, nil
+	}
+
+	return UpdateResult{
+		HasUpdate:      true,
+		CurrentVersion: currentVersion,
+		LatestVersion:  latest.Version(),
+		ReleaseNotes:   latest.ReleaseNotes,
+	}, nil
+}
+
+// DoUpdate downloads and applies the latest release, then restarts the app.
+func (a *App) DoUpdate() error {
+	updater, err := selfupdate.NewUpdater(selfupdate.Config{
+		Filters: []string{"teacher-wails.exe"},
+	})
+	if err != nil {
+		return fmt.Errorf("初始化更新器失敗: %w", err)
+	}
+
+	latest, found, err := updater.DetectLatest(context.Background(), selfupdate.ParseSlug("holehole5566/teacher-helper"))
+	if err != nil {
+		return fmt.Errorf("檢查更新失敗: %w", err)
+	}
+	if !found {
+		return fmt.Errorf("找不到可用的更新")
+	}
+
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("無法取得執行檔路徑: %w", err)
+	}
+
+	if err := updater.UpdateTo(context.Background(), latest, exePath); err != nil {
+		return fmt.Errorf("更新失敗: %w", err)
+	}
+
+	// Restart the application
+	cmd := exec.Command(exePath)
+	cmd.Start()
+	os.Exit(0)
+
+	return nil
 }

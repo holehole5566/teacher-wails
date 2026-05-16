@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { GetTodayDuty, GetTimetable, GetSettings } from '../../../wailsjs/go/main/App';
+  import { GetTodayDuty, GetTimetable, GetSettings, GetMissingHomework, GetStudents } from '../../../wailsjs/go/main/App';
 
   const dayLabels = ['日', '一', '二', '三', '四', '五', '六'];
   const periodLabels = ['1', '2', '3', '4', '午休', '5', '6', '7'];
@@ -14,6 +14,8 @@
   let currentPeriod = -1;
   let periodTimes: string[] = [];
   let clockInterval: ReturnType<typeof setInterval>;
+  let missingHomework: { subject: string; students: number[]; note: string }[] = [];
+  let allStudents: { seat_number: number; name: string }[] = [];
 
   function updateClock() {
     now = new Date();
@@ -62,6 +64,9 @@
       }
       todayClasses = classes;
     }
+
+    missingHomework = await GetMissingHomework();
+    allStudents = await GetStudents();
 
     updateClock();
   }
@@ -129,6 +134,27 @@
           {/each}
         </div>
       </div>
+
+      {#if missingHomework.length > 0}
+        <div class="section-card homework-card">
+          <h2>📝 作業未交</h2>
+          <div class="homework-list">
+            {#each missingHomework as hw}
+              <div class="homework-item">
+                <span class="hw-subject">{hw.subject}</span>
+                <div class="hw-students">
+                  {#each hw.students as seat}
+                    <span class="hw-name">{seat}號 {allStudents.find(s => s.seat_number === seat)?.name || ''}</span>
+                  {/each}
+                </div>
+                {#if hw.note}
+                  <span class="hw-note">{hw.note}</span>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
 
@@ -314,6 +340,43 @@
   .no-data {
     opacity: 0.4;
     font-size: 16px;
+  }
+
+  .homework-card {
+    border-left: 4px solid #ef4444;
+  }
+  .homework-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .homework-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .hw-subject {
+    font-size: 18px;
+    font-weight: 700;
+    color: #991b1b;
+  }
+  .hw-students {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .hw-name {
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .hw-note {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 2px;
   }
 
   /* Footer */

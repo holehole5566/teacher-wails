@@ -89,6 +89,22 @@ export namespace models {
 		    return a;
 		}
 	}
+	export class MissingHomework {
+	    subject: string;
+	    students: number[];
+	    note: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MissingHomework(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.subject = source["subject"];
+	        this.students = source["students"];
+	        this.note = source["note"];
+	    }
+	}
 	export class MusicTrack {
 	    path: string;
 	    in_random: boolean;

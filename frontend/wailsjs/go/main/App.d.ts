@@ -29,6 +29,8 @@ export function GetCurrentVersion():Promise<string>;
 
 export function GetHolidays():Promise<Array<string>>;
 
+export function GetMissingHomework():Promise<Array<models.MissingHomework>>;
+
 export function GetSettings():Promise<models.Settings>;
 
 export function GetStudents():Promise<Array<models.Student>>;
@@ -38,6 +40,8 @@ export function GetTimetable():Promise<any>;
 export function GetTodayDuty():Promise<models.TodayDutyResult>;
 
 export function ReportError(arg1:string):Promise<void>;
+
+export function SaveMissingHomework(arg1:Array<models.MissingHomework>):Promise<void>;
 
 export function SaveSettings(arg1:models.Settings):Promise<void>;
 

@@ -54,6 +54,10 @@ export function GetHolidays() {
   return window['go']['main']['App']['GetHolidays']();
 }
 
+export function GetMissingHomework() {
+  return window['go']['main']['App']['GetMissingHomework']();
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
@@ -72,6 +76,10 @@ export function GetTodayDuty() {
 
 export function ReportError(arg1) {
   return window['go']['main']['App']['ReportError'](arg1);
+}
+
+export function SaveMissingHomework(arg1) {
+  return window['go']['main']['App']['SaveMissingHomework'](arg1);
 }
 
 export function SaveSettings(arg1) {

@@ -41,16 +41,24 @@ type Settings struct {
 
 // Config is the top-level JSON structure persisted to config.json.
 type Config struct {
-	Students  []Student    `json:"students"`
-	Settings  Settings     `json:"settings"`
-	Holidays  []string     `json:"holidays"`
-	Timetable [5][8]string `json:"timetable"`
+	Students        []Student         `json:"students"`
+	Settings        Settings          `json:"settings"`
+	Holidays        []string          `json:"holidays"`
+	Timetable       [5][8]string      `json:"timetable"`
+	MissingHomework []MissingHomework `json:"missing_homework"`
 }
 
 // LunchAssignment pairs a student with a meal bucket.
 type LunchAssignment struct {
 	Student Student `json:"student"`
 	Bucket  string  `json:"bucket"`
+}
+
+// MissingHomework tracks one homework assignment's missing submissions.
+type MissingHomework struct {
+	Subject  string `json:"subject"`
+	Students []int  `json:"students"`
+	Note     string `json:"note"`
 }
 
 // TodayDutyResult is returned by GetTodayDuty to the frontend.

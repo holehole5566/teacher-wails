@@ -175,6 +175,9 @@ func (dh *DataHandler) loadConfigUnsafe() (models.Config, error) {
 	if config.Settings.CountdownTimeMusicMap == nil {
 		config.Settings.CountdownTimeMusicMap = []models.CountdownTimeMusic{}
 	}
+	if config.MissingHomework == nil {
+		config.MissingHomework = []models.MissingHomework{}
+	}
 	return config, err
 }
 
@@ -265,5 +268,26 @@ func (dh *DataHandler) SaveTimetable(timetable [5][8]string) error {
 		return err
 	}
 	config.Timetable = timetable
+	return dh.saveConfigUnsafe(config)
+}
+
+// GetMissingHomework returns the missing homework list.
+func (dh *DataHandler) GetMissingHomework() ([]models.MissingHomework, error) {
+	config, err := dh.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return config.MissingHomework, nil
+}
+
+// SaveMissingHomework saves the missing homework list.
+func (dh *DataHandler) SaveMissingHomework(records []models.MissingHomework) error {
+	dh.mu.Lock()
+	defer dh.mu.Unlock()
+	config, err := dh.loadConfigUnsafe()
+	if err != nil {
+		return err
+	}
+	config.MissingHomework = records
 	return dh.saveConfigUnsafe(config)
 }

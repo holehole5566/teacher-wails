@@ -443,6 +443,20 @@ func (a *App) SaveTimetable(timetable [5][8]string) error {
 	return a.dh.SaveTimetable(timetable)
 }
 
+// GetMissingHomework returns the missing homework records.
+func (a *App) GetMissingHomework() []models.MissingHomework {
+	records, err := a.dh.GetMissingHomework()
+	if err != nil {
+		return []models.MissingHomework{}
+	}
+	return records
+}
+
+// SaveMissingHomework saves the missing homework records.
+func (a *App) SaveMissingHomework(records []models.MissingHomework) error {
+	return a.dh.SaveMissingHomework(records)
+}
+
 // SelectCountdownMusics opens a multi-file dialog for the user to pick MP3 files.
 func (a *App) SelectCountdownMusics() ([]string, error) {
 	return runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{

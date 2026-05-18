@@ -57,6 +57,13 @@
           DebugLog(`[Countdown] Available outputs: ${outputs.map(d => `${d.label}(${d.deviceId.slice(0,8)})`).join(', ')}`);
         } catch {}
 
+        audio.addEventListener('loadedmetadata', () => {
+          if (audio && audio.duration < 60) {
+            audio.loop = true;
+            DebugLog(`[Countdown] Audio duration=${audio.duration.toFixed(1)}s < 60s, looping enabled`);
+          }
+        });
+
         DebugLog(`[Countdown] Attempting play...`);
         audio.play().then(() => {
           DebugLog(`[Countdown] Audio play() succeeded, sinkId="${(audio as any)?.sinkId ?? 'unknown'}"`);
